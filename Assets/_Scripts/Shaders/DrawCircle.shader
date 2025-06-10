@@ -2,9 +2,11 @@ Shader "Shaders/DrawCircle"
 {
     Properties
     {
-        _BrushPos("Brush Position", Vector) = (-1, -1, 0, 0)
+        _MainTex ("Main Texture", 2D) = "white" {}
+        _BrushPos("Brush Position", Vector) = (.5, .5, 0, 0)
         _BrushRadius("Brush Radius", Float) = 0.2
         _BrushStrength("Brush Strength", Float) = 1.0
+        _FadeSpeed ("Fade Speed", Range(0,1)) = 0.95
     }
 
     SubShader
@@ -31,9 +33,12 @@ Shader "Shaders/DrawCircle"
                 float2 uv : TEXCOORD0;
             };
 
+            sampler2D _MainTex;
+            float _MainTex_ST;
             float2 _BrushPos;
             float _BrushRadius;
             float _BrushStrength;
+            float _FadeSpeed;
 
             v2f vert(appdata v)
             {
@@ -47,7 +52,14 @@ Shader "Shaders/DrawCircle"
             {
                 float dist = distance(i.uv, _BrushPos);
                 float alpha = smoothstep(_BrushRadius, 0.0, dist) * _BrushStrength;
-                return fixed4(alpha, alpha, alpha, 1);
+
+                fixed4 prevColor = tex2D(_MainTex, i.uv); // Use render texture color
+                prevColor.rgb *= _FadeSpeed; 
+
+                fixed4 newColor = fixed4(alpha, alpha, alpha, 1);
+                fixed4 finalColor = max(prevColor, newColor);
+
+                return finalColor;
             }
             ENDCG
         }
