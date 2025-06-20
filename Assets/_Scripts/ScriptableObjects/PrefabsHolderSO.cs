@@ -5,6 +5,9 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 
+/// <summary>
+/// This class holds a list of prefabs and their corresponding types binding to an id.
+/// </summary>
 [System.Serializable]
 public class PrefabData
 {
@@ -13,11 +16,18 @@ public class PrefabData
     public int prefabType;
 }
 
+/// <summary>
+/// This class holds a list of prefabs and their corresponding types.
+/// You can use the prefabs list as a temporary holder to create new PrefabData to use at runtime.
+/// Put new prefabs in the list and then call the GeneratePrefabData method to populate the prefabDataList.
+/// </summary>
 [CreateAssetMenu(fileName = "PrefabsHolderSO", menuName = "SO/PrefabsHolderSO")]
 public class PrefabsHolderSO : ScriptableObject
 {
+    #region VARIABLES
+
     [Header("Default Prefab")]
-    public GameObject defaultPrefab;
+    public PrefabData defaultPrefab;
 
     [Header("Source list of prefabs to register")]
     public List<GameObject> prefabs = new List<GameObject>();
@@ -26,6 +36,8 @@ public class PrefabsHolderSO : ScriptableObject
     public List<PrefabData> prefabDataList = new List<PrefabData>();
 
     private Dictionary<string, PrefabData> _prefabDataDict;
+
+    #endregion
 
 #if UNITY_EDITOR
     [ContextMenu("Add Only New Prefabs")]
@@ -62,6 +74,8 @@ public class PrefabsHolderSO : ScriptableObject
     }
 #endif
 
+    #region PRIVATE METHODS
+
     private void OnValidate()
     {
         AddOnlyNewPrefabs();
@@ -89,6 +103,10 @@ public class PrefabsHolderSO : ScriptableObject
         }
     }
 
+    #endregion
+
+    #region PUBLIC METHODS
+
     // Runtime use
     public void InitializeRuntimeDictionary()
     {
@@ -115,7 +133,7 @@ public class PrefabsHolderSO : ScriptableObject
             return data;
 
         Debug.LogWarning($"[PrefabsHolderSO] Prefab with ID '{id}' not found.");
-        return new PrefabData { id = id, prefab = defaultPrefab, prefabType = -1 };
+        return new PrefabData { id = id, prefab = defaultPrefab.prefab, prefabType = -1 };
     }
 
     public PrefabData GetPrefabDataByIndex(int index)
@@ -130,7 +148,23 @@ public class PrefabsHolderSO : ScriptableObject
         }
 
         Debug.LogWarning($"[PrefabsHolderSO] Prefab index '{index}' is out of range.");
-        return new PrefabData { id = "", prefab = defaultPrefab, prefabType = -1 };
+        return new PrefabData { id = "", prefab = defaultPrefab.prefab, prefabType = -1 };
     }
+
+    public PrefabData GetRandomPrefabData()
+    {
+        if (prefabDataList != null && prefabDataList.Count > 0)
+        {
+            int index = Random.Range(0, prefabDataList.Count);
+            var data = prefabDataList[index];
+            if (data != null && data.prefab != null)
+                return data;
+        }
+
+        Debug.LogWarning("[PrefabsHolderSO] No valid prefabs found, returning default.");
+        return defaultPrefab;
+    }
+
+    #endregion
 
 }
