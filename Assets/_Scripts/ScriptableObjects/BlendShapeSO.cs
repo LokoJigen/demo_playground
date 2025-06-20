@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-
+/// <summary>
+/// Atomic class holding desired blend shape weights that rapresents an intended expression.
+/// </summary>
 [CreateAssetMenu(fileName = "BlendShapeSO", menuName = "SO/BlendShapeSO")]
 public class BlendShapeSO : ScriptableObject
 {
