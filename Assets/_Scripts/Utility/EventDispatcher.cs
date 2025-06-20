@@ -13,6 +13,8 @@ public enum EventType
     Collision,
 }
 
+// Used this implementation to handle internal app components communications.
+
 namespace com.trashpandaboy.events
 {
     public class EventDispatcher : MonoBehaviour

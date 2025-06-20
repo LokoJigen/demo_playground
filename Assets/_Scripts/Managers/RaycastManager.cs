@@ -2,6 +2,9 @@ using System.Text;
 using com.trashpandaboy.events;
 using UnityEngine;
 
+/// <summary>
+/// This class contains data related to raycast events.
+/// </summary>
 public class RaycastEventData
 {
     public RaycastHit raycastHit;
@@ -28,9 +31,14 @@ public class RaycastEventData
     }
 }
 
-
+/// <summary>
+/// This class handles raycast events and triggers appropriate events based on raycast results.
+/// </summary>
 public class RaycastManager : MonoBehaviour
 {
+
+    #region VARIABLES
+
     public LayerMask hitLayers; // Filter
     public float sensitivity = 0.1f; // Soglia di movimento minimo
     public float directionChangeThreshold = 5f; // Gradi di differenza per considerare un cambio
@@ -39,28 +47,36 @@ public class RaycastManager : MonoBehaviour
     private float m_currentMouseSpeed = 0f;
     private bool m_isHit = false;
 
+    #endregion
+
+    #region UNITY CALLBACKS
+
     void Update()
     {
         CacheMouseInfo();
 
-        if (Input.GetMouseButton(1)) // Click sinistro
+        if (Input.GetMouseButton(1)) // Right mouse button
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             if (Physics.Raycast(ray, out RaycastHit hitInfo, 1000f, hitLayers) && !m_isHit)
             {
-                Debug.Log($"Hit: {hitInfo.collider.name} a {hitInfo.point}");
-                
+                // Debug.Log($"Hit: {hitInfo.collider.name} a {hitInfo.point}");
+
                 m_isHit = true;
-                // Trigger on collision event
-                EventDispatcher.TriggerEvent(EventType.RaycastHit.ToString(), new RaycastEventData(hitInfo, m_currentMouseSpeed, m_lastDirection));
+                EventDispatcher.TriggerEvent(EventType.RaycastHit, new RaycastEventData(hitInfo, m_currentMouseSpeed, m_lastDirection));
             }
         }
 
         if (Input.GetMouseButtonUp(1))
         {
+            // Reset hit status for next raycast
             m_isHit = false;
         }
     }
+
+    #endregion
+
+    #region HELPER METHODS
 
     private bool CacheMouseInfo()
     {
@@ -73,17 +89,10 @@ public class RaycastManager : MonoBehaviour
 
         Vector2 currentDirection = mouseDelta.normalized;
 
-        if (m_lastDirection != Vector2.zero)
-        {
-            float angle = Vector2.Angle(m_lastDirection, currentDirection);
-            if (angle > directionChangeThreshold)
-            {
-                // Debug.Log($"[MouseDirectionDebugger] new direction: {currentDirection}, angle: {angle}°");
-            }
-        }
-
         m_lastDirection = currentDirection;
         return true;
     }
+
+    #endregion
 
 }

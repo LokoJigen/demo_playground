@@ -2,89 +2,107 @@ using System.Collections;
 using com.trashpandaboy.events;
 using UnityEngine;
 
+/// <summary>
+/// This class controls the mesh of an object.
+/// Applies a displacement and extrusion effect to the mesh vertices based on the given parameters.
+/// </summary>
 [RequireComponent(typeof(MeshFilter))]
 [RequireComponent(typeof(MeshCollider))]
 public class MeshController : MonoBehaviour
 {
-    [Tooltip("Valore di estrusione lungo la normale dei vertici")]
-    [Range(-1f, 1f)] public float extrusionAmount = 0f;
-    [Range(0f, 1f)] public float displacementAmount = 0.1f;
+    #region VARIABLES
 
-    [Tooltip("Cutoff per il dot product: valori sotto questo non sono influenzati.")]
+    [Header("Vertex manipulation settings")]
+
+    [Tooltip("Extrusion amount along the line center-vertex positions.")]
+    [Range(-1f, 1f)] public float extrusionAmount = 0f;
+
+    [Tooltip("Displacement amount from the collision point along mouse direction if mouse speed > 0. Vertex-center of the mesh is used if mouse speed == 0.")]
+    [Range(0f, 1.5f)] public float displacementAmount = 0.1f;
+
+    [Tooltip("Cutoff for the dot product")]
     [Range(-1f, 1f)] public float dotCutoff = 0.1f;
 
-    [Tooltip("Distanza massima dal punto d’impatto entro cui l’effetto è applicato.")]
+    [Tooltip("Falloff radius from impact point")]
     public float impactFalloffRadius = 1.0f;
 
+    [Space]
 
-
-    [Header("Animazione")]
+    [Header("Animation settings")]
     public float meshAnimationDuration = 0.5f;
     public AnimationCurve easingCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
 
-    private MeshFilter meshFilter;
-    private Mesh originalMesh;
-    private Vector3[] originalVertices;
+    private MeshFilter m_meshFilter;
+    private Mesh m_originalMesh;
+    private Vector3[] m_originalVertices;
 
-    private float lastExtrusion;
-    private Vector3 meshCenter;
+    private float m_lastExtrusion;
+    private Vector3 m_meshCenter;
     private MeshCollider _meshCollider;
+
+    #endregion
+
+    #region UNITY CALLBACKS
 
     void OnEnable()
     {
-        meshFilter = GetComponent<MeshFilter>();
+        m_meshFilter = GetComponent<MeshFilter>();
         _meshCollider = GetComponent<MeshCollider>();
 
-        if (meshFilter != null && meshFilter.sharedMesh != null)
+        if (m_meshFilter != null && m_meshFilter.sharedMesh != null)
         {
-            originalMesh = meshFilter.sharedMesh;
-            Mesh clonedMesh = Instantiate(originalMesh);
-            meshFilter.sharedMesh = clonedMesh;
+            m_originalMesh = m_meshFilter.sharedMesh;
+            Mesh clonedMesh = Instantiate(m_originalMesh);
+            m_meshFilter.sharedMesh = clonedMesh;
 
-            originalVertices = clonedMesh.vertices;
+            m_originalVertices = clonedMesh.vertices;
 
-            lastExtrusion = extrusionAmount;
-            meshCenter = CalculateMeshCenter(originalVertices);
+            m_lastExtrusion = extrusionAmount;
+            m_meshCenter = CalculateMeshCenter(m_originalVertices);
             ApplyExtrusion();
         }
 
         UpdateMeshCollider();
 
-        EventDispatcher.StartListening(EventType.RaycastHit.ToString(), HandleOnCollision);
+        EventDispatcher.StartListening(EventType.RaycastHit, HandleOnCollision);
     }
 
     void OnDisable()
     {
-        EventDispatcher.StopListening(EventType.RaycastHit.ToString(), HandleOnCollision);
+        EventDispatcher.StopListening(EventType.RaycastHit, HandleOnCollision);
     }
 
     void Update()
     {
-        if (Mathf.Abs(lastExtrusion - extrusionAmount) > 0.0001f)
+        if (Mathf.Abs(m_lastExtrusion - extrusionAmount) > 0.0001f)
         {
             ApplyExtrusion();
-            lastExtrusion = extrusionAmount;
+            m_lastExtrusion = extrusionAmount;
 
             UpdateMeshCollider();
         }
     }
 
+    #endregion
+
     private void HandleOnCollision(object data)
     {
         if (data is RaycastEventData collisionEventData)
         {
-            TriggerImpactAnimated(collisionEventData.raycastHit.point);
+            TriggerImpactAnimated(collisionEventData.raycastHit.point, collisionEventData.mouseSpeed, collisionEventData.mouseDirection);
         }
     }
 
+    #region VERTEX MANIPULATION METHODS
+
     private void ApplyExtrusion()
     {
-        if (meshFilter == null || meshFilter.sharedMesh == null) return;
+        if (m_meshFilter == null || m_meshFilter.sharedMesh == null) return;
 
         Vector3[] extrudedVertices = GetExtrudedVertices();
 
-        Mesh mesh = meshFilter.sharedMesh;
+        Mesh mesh = m_meshFilter.sharedMesh;
         mesh.vertices = extrudedVertices;
         mesh.RecalculateBounds();
         mesh.RecalculateNormals();
@@ -92,11 +110,11 @@ public class MeshController : MonoBehaviour
 
     private Vector3[] GetExtrudedVertices()
     {
-        Vector3[] extruded = new Vector3[originalVertices.Length];
+        Vector3[] extruded = new Vector3[m_originalVertices.Length];
         for (int i = 0; i < extruded.Length; i++)
         {
-            Vector3 dir = (originalVertices[i] - meshCenter).normalized;
-            extruded[i] = originalVertices[i] + dir * extrusionAmount;
+            Vector3 dir = (m_originalVertices[i] - m_meshCenter).normalized;
+            extruded[i] = m_originalVertices[i] + dir * extrusionAmount;
         }
         return extruded;
     }
@@ -109,26 +127,34 @@ public class MeshController : MonoBehaviour
         return sum / verts.Length;
     }
 
-    public void TriggerImpactAnimated(Vector3 localImpactPoint)
+    private void TriggerImpactAnimated(Vector3 localImpactPoint, float mouseSpeed, Vector3 mouseDirection)
     {
         StopAllCoroutines();
-        StartCoroutine(AnimateImpact(localImpactPoint));
-        // EventDispatcher.TriggerEvent(EventType.Vfx.ToString(), new VfxEventData(1, localImpactPoint));
+        StartCoroutine(AnimateImpact(localImpactPoint, mouseSpeed, mouseDirection));
     }
 
-    private IEnumerator AnimateImpact(Vector3 localImpactPoint)
+    private IEnumerator AnimateImpact(Vector3 localImpactPoint, float mouseSpeed, Vector3 mouseDirection)
     {
-        if (meshFilter == null || meshFilter.sharedMesh == null) yield break;
+        if (m_meshFilter == null || m_meshFilter.sharedMesh == null) yield break;
 
-        Vector3 impactDirection = (localImpactPoint - meshCenter).normalized;
-        Vector3[] baseVertices = GetExtrudedVertices(); // usa mesh estrusa come base
+        SetDisplacementeAmountClamped(mouseSpeed);
+
+        Vector3 impactDirection = (localImpactPoint - m_meshCenter).normalized;
+        if (mouseSpeed > 0)
+        {
+            Vector3 mouseDirectionFlippedX = new Vector3(-mouseDirection.x, mouseDirection.y, mouseDirection.z);
+            Vector3 impactProjectionPoint = localImpactPoint + mouseDirectionFlippedX;
+            impactDirection = (localImpactPoint - impactProjectionPoint).normalized;
+        }
+
+        Vector3[] baseVertices = GetExtrudedVertices(); // use extruded mesh as a base for displacement
 
         Vector3[] deformedVertices = new Vector3[baseVertices.Length];
         Vector3[] currentVertices = new Vector3[baseVertices.Length];
 
         for (int i = 0; i < baseVertices.Length; i++)
         {
-            Vector3 fromCenter = (baseVertices[i] - meshCenter).normalized;
+            Vector3 fromCenter = (baseVertices[i] - m_meshCenter).normalized;
             float dot = Vector3.Dot(fromCenter, impactDirection);
             float dotDisplacement = impactFalloffRadius * dot;
 
@@ -140,7 +166,7 @@ public class MeshController : MonoBehaviour
                 deformedVertices[i] = baseVertices[i];
         }
 
-        Mesh mesh = meshFilter.sharedMesh;
+        Mesh mesh = m_meshFilter.sharedMesh;
         float elapsed = 0f;
         while (elapsed < meshAnimationDuration)
         {
@@ -171,6 +197,16 @@ public class MeshController : MonoBehaviour
         if (_meshCollider == null) return;
 
         _meshCollider.sharedMesh = null;
-        _meshCollider.sharedMesh = meshFilter.sharedMesh;
+        _meshCollider.sharedMesh = m_meshFilter.sharedMesh;
     }
+
+    private void SetDisplacementeAmountClamped(float mouseSpeed)
+    {
+        // Debug.Log($"[MeshController] MouseSpeed {mouseSpeed}");
+        float mouseSpeedClamped = Mathf.Clamp(mouseSpeed, 20f, 150f);
+
+        displacementAmount = Mathf.Clamp(mouseSpeedClamped / 100f, 0f, 1.5f);
+    }
+
+    #endregion
 }

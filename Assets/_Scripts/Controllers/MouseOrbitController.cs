@@ -70,7 +70,7 @@ public class MouseOrbitController : MonoBehaviour
 
             UpdateRotationCached();
 
-            Debug.Log($"[MouseOrbitController] Target at position ({lookTarget.position.x}, {lookTarget.position.y}, {lookTarget.position.z})");
+            // Debug.Log($"[MouseOrbitController] Target at position ({lookTarget.position.x}, {lookTarget.position.y}, {lookTarget.position.z})");
         }
     }
 
@@ -97,7 +97,7 @@ public class MouseOrbitController : MonoBehaviour
 
             UpdateCameraOrbitPosition();
 
-            Debug.Log($"[MouseOrbitController] wasLocked: {wasLocked}, Mouse X: {currentMousePosition.x}, Mouse Y: {currentMousePosition.y}, yaw: {yaw}, pitch: {pitch}");
+            // Debug.Log($"[MouseOrbitController] wasLocked: {wasLocked}, Mouse X: {currentMousePosition.x}, Mouse Y: {currentMousePosition.y}, yaw: {yaw}, pitch: {pitch}");
         }
 
         if (Input.GetMouseButtonUp(0))

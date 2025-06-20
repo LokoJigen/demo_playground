@@ -1,10 +1,9 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using com.trashpandaboy.events;
 using UnityEngine;
 
-public enum ExpressionType { None, Idle, DistantFace, Hit, Weird }
+public enum ExpressionType { None, Idle, DistantFace, Hit, Weird, Mix, }
 
 public enum EasingType
 {
@@ -20,37 +19,41 @@ public class ExpressionsData
 {
     public ExpressionType expressionType;
     public BlendShapeSO blendShapeData;
-    // public float expressionDuration;
 }
 
 [RequireComponent(typeof(SkinnedMeshRenderer))]
 public class ExpressionController : MonoBehaviour
 {
-    public List<ExpressionsData> blendShapeSOs = new List<ExpressionsData>();
-    public ExpressionType currentExpression = ExpressionType.Idle;
-    public EasingType easingType = EasingType.EaseInOut;
+    #region VARIABLES
 
-    private Dictionary<ExpressionType, BlendShapeSO> m_blendShapesDict = new();
-    private SkinnedMeshRenderer _skinnedMeshRenderer;
-    private Coroutine _currentCoroutine;
+    [SerializeField] private BlendShapesCollectionSO _blendShapesCollection;
+    [SerializeField] private EasingType _easingType = EasingType.EaseInOut;
+
+    private SkinnedMeshRenderer m_skinnedMeshRenderer;
+    private Coroutine m_currentCoroutine;
+    private ExpressionType m_currentExpression = ExpressionType.Idle;
+
+    #endregion
+
+    public static ExpressionType GetRandomExpression()
+    {
+        return ProjectUtils.GetRandomEnumValue(new[] { ExpressionType.None, ExpressionType.Idle, ExpressionType.Mix });
+    }
+
+    #region UNITY CALLBACKS
 
     private void OnEnable()
     {
-        _skinnedMeshRenderer = GetComponent<SkinnedMeshRenderer>();
+        m_skinnedMeshRenderer = GetComponent<SkinnedMeshRenderer>();
 
-        m_blendShapesDict.Clear();
+        Debug.Assert(m_skinnedMeshRenderer != null, "SkinnedMeshRenderer not found");
 
-        foreach (var data in blendShapeSOs)
-        {
-            m_blendShapesDict[data.expressionType] = data.blendShapeData;
-        }
-
-        EventDispatcher.StartListening(EventType.Collision.ToString(), HandleOnCollision);
+        EventDispatcher.StartListening(EventType.Collision, HandleOnCollision);
     }
 
     private void OnDisable()
     {
-        EventDispatcher.StopListening(EventType.Collision.ToString(), HandleOnCollision);
+        EventDispatcher.StopListening(EventType.Collision, HandleOnCollision);
     }
 
     private void Update()
@@ -61,76 +64,73 @@ public class ExpressionController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.E)) SwitchExpression(ExpressionType.Weird);
         if (Input.GetKeyDown(KeyCode.R)) SwitchExpression(ExpressionType.Idle);
     }
+    #endregion
 
-    public void SwitchExpression(ExpressionType newExpression)
+    #region PRIVATE METHODS
+
+    private void SwitchExpression(ExpressionType newExpression)
     {
-        if (!_skinnedMeshRenderer || !m_blendShapesDict.ContainsKey(newExpression)) return;
+        if (!m_skinnedMeshRenderer) return;
 
-        if (_currentCoroutine != null) StopCoroutine(_currentCoroutine);
+        if (!_blendShapesCollection.TryGetValue(newExpression, out var targetData)) return;
 
-        Debug.Log($"[ExpressionController] Switching to expression: {newExpression}, duration {m_blendShapesDict[newExpression].blendShapeDuration}", this);
-        _currentCoroutine = StartCoroutine(AnimateToExpression(newExpression, m_blendShapesDict[newExpression].blendShapeDuration));
+        if (m_currentCoroutine != null) StopCoroutine(m_currentCoroutine);
+
+        m_currentCoroutine = StartCoroutine(AnimateToExpression(newExpression, targetData.BlendShape.blendShapeDuration));
     }
 
-    private IEnumerator AnimateToExpression(ExpressionType newExpression, float holdDuration)
+    private IEnumerator AnimateToExpression(ExpressionType to, float holdDuration)
     {
-        ExpressionType from = currentExpression;
-        ExpressionType to = newExpression;
-        currentExpression = to;
-
+        Debug.Log($"[ExpressionController] Switching to expression: {to}, duration {holdDuration}, time {Time.time}", this);
         float time = 0f;
         float holdDurationOneWay = holdDuration * 0.5f;
 
         while (time < holdDurationOneWay)
         {
-            float t = ApplyEasing(time / holdDurationOneWay, easingType);
-            ApplyBlendShapeLerp(from, to, t);
+            float t = ApplyEasing(time / holdDurationOneWay, _easingType);
+            ApplyBlendShapeLerp(m_currentExpression, to, t);
             time += Time.deltaTime;
             yield return null;
         }
 
-        ApplyBlendShapeLerp(from, to, 1f);
-
-        // Attendi la durata dell’espressione
-        yield return new WaitForSeconds(holdDurationOneWay);
-
-        // Ritorna all’Idle
-        ExpressionType backToIdle = ExpressionType.Idle;
-        from = to;
-        to = backToIdle;
+        Debug.Log($"[ExpressionController] Switching to expression Idle: time {Time.time}", this);
+        ApplyBlendShapeLerp(m_currentExpression, to, 1f);
+        m_currentExpression = to;
         time = 0f;
 
         while (time < holdDurationOneWay)
         {
-            float t = ApplyEasing(time / holdDurationOneWay, easingType);
-            ApplyBlendShapeLerp(from, to, t);
+            float t = ApplyEasing(time / holdDurationOneWay, _easingType);
+            ApplyBlendShapeLerp(m_currentExpression, ExpressionType.Idle, t);
             time += Time.deltaTime;
             yield return null;
         }
 
-        ApplyBlendShapeLerp(from, to, 1f);
-        currentExpression = backToIdle;
-        _currentCoroutine = null;
+        Debug.Log($"[ExpressionController] Switching to expression finished: time {Time.time}", this);
+        ApplyBlendShapeLerp(m_currentExpression, ExpressionType.Idle, 1f);
+        m_currentExpression = ExpressionType.Idle;
+        m_currentCoroutine = null;
     }
+
 
     private void ApplyBlendShapeLerp(ExpressionType from, ExpressionType to, float t)
     {
-        // Debug.Log($"[ExpressionController] Applying blend shape lerp from {from} to {to} at time {t}", this);
+        if (!_blendShapesCollection.TryGetValue(from, out var fromData) ||
+            !_blendShapesCollection.TryGetValue(to, out var toData)) return;
 
-        var fromData = m_blendShapesDict[from].blendShapeDatas;
-        var toData = m_blendShapesDict[to].blendShapeDatas;
+        // Debug.Log($"[ExpressionController] ApplyBlendShapeLerp - from: {from}, to: {to}, t: {t}", this);
+        var fromWeights = fromData.BlendShape.blendShapeDatas;
+        var toWeights = toData.BlendShape.blendShapeDatas;
 
-        for (int i = 0; i < toData.Count; i++)
+        for (int i = 0; i < toWeights.Count; i++)
         {
-            float fromValue = i < fromData.Count ? fromData[i] : 0f;
-            float toValue = toData[i];
+            float fromValue = i < fromWeights.Count ? fromWeights[i] : 0f;
+            float toValue = toWeights[i];
             float lerped = Mathf.Lerp(fromValue, toValue, t);
-            _skinnedMeshRenderer.SetBlendShapeWeight(i, lerped);
-
-            if(i == 0)
-                Debug.Log($"Blend shape {i} from {fromValue} to {toValue} at time {t}, lerped {lerped}", this);
+            m_skinnedMeshRenderer.SetBlendShapeWeight(i, lerped);
         }
     }
+
 
     protected float ApplyEasing(float t, EasingType easingType)
     {
@@ -200,7 +200,16 @@ public class ExpressionController : MonoBehaviour
     {
         if (data is CollisionEventData collisionEventData)
         {
-            SwitchExpression(collisionEventData.targetExpression);
+            if (collisionEventData.isEpicCollision)
+            {
+                SwitchExpression(ExpressionType.Mix);
+            }
+            else
+            {
+                SwitchExpression(collisionEventData.targetExpression);
+            }
         }
     }
+    #endregion
+
 }
