@@ -56,6 +56,8 @@ public class ExpressionController : MonoBehaviour
         EventDispatcher.StopListening(EventType.Collision, HandleOnCollision);
     }
 
+#if UNITY_EDITOR
+
     private void Update()
     {
         // Debug input
@@ -64,6 +66,9 @@ public class ExpressionController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.E)) SwitchExpression(ExpressionType.Weird);
         if (Input.GetKeyDown(KeyCode.R)) SwitchExpression(ExpressionType.Idle);
     }
+
+#endif
+    
     #endregion
 
     #region PRIVATE METHODS
