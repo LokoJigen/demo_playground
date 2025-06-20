@@ -86,7 +86,7 @@ public class ExpressionController : MonoBehaviour
 
     private IEnumerator AnimateToExpression(ExpressionType to, float holdDuration)
     {
-        Debug.Log($"[ExpressionController] Switching to expression: {to}, duration {holdDuration}, time {Time.time}", this);
+        // Debug.Log($"[ExpressionController] Switching to expression: {to}, duration {holdDuration}, time {Time.time}", this);
         float time = 0f;
         float holdDurationOneWay = holdDuration * 0.5f;
 
@@ -98,7 +98,7 @@ public class ExpressionController : MonoBehaviour
             yield return null;
         }
 
-        Debug.Log($"[ExpressionController] Switching to expression Idle: time {Time.time}", this);
+        // Debug.Log($"[ExpressionController] Switching to expression Idle: time {Time.time}", this);
         ApplyBlendShapeLerp(m_currentExpression, to, 1f);
         m_currentExpression = to;
         time = 0f;
@@ -111,7 +111,7 @@ public class ExpressionController : MonoBehaviour
             yield return null;
         }
 
-        Debug.Log($"[ExpressionController] Switching to expression finished: time {Time.time}", this);
+        // Debug.Log($"[ExpressionController] Switching to expression finished: time {Time.time}", this);
         ApplyBlendShapeLerp(m_currentExpression, ExpressionType.Idle, 1f);
         m_currentExpression = ExpressionType.Idle;
         m_currentCoroutine = null;
