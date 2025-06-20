@@ -237,6 +237,8 @@ MonoBehaviour:
   materialFresnelToggleProperty: _FresnelToggle
   materialFresnelThresholdProperty: _FresnelThreshold
   materialPulseProperty: _UseFresnelPulse
+  materialPulseSpeed: _FresnelPulseSpeed
+  materialPulseAmplitude: _FresnelPulseAmplitude
   feedbackDuration: 1
 --- !u!1 &178628579
 GameObject:
@@ -442,7 +444,7 @@ AudioSource:
   m_PlayOnAwake: 1
   m_Volume: 1
   m_Pitch: 1
-  Loop: 0
+  Loop: 1
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
@@ -614,6 +616,8 @@ MonoBehaviour:
   materialFresnelToggleProperty: _FresnelToggle
   materialFresnelThresholdProperty: _FresnelThreshold
   materialPulseProperty: _UseFresnelPulse
+  materialPulseSpeed: _FresnelPulseSpeed
+  materialPulseAmplitude: _FresnelPulseAmplitude
   feedbackDuration: 1
 --- !u!1 &524979296 stripped
 GameObject:
@@ -705,6 +709,8 @@ MonoBehaviour:
   materialFresnelToggleProperty: _FresnelToggle
   materialFresnelThresholdProperty: _FresnelThreshold
   materialPulseProperty: _UseFresnelPulse
+  materialPulseSpeed: _FresnelPulseSpeed
+  materialPulseAmplitude: _FresnelPulseAmplitude
   feedbackDuration: 1
 --- !u!1 &606254470
 GameObject:
@@ -1156,6 +1162,8 @@ MonoBehaviour:
   materialFresnelToggleProperty: _FresnelToggle
   materialFresnelThresholdProperty: _FresnelThreshold
   materialPulseProperty: _UseFresnelPulse
+  materialPulseSpeed: _FresnelPulseSpeed
+  materialPulseAmplitude: _FresnelPulseAmplitude
   feedbackDuration: 1
 --- !u!1 &1198770128
 GameObject:
