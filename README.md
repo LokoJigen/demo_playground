@@ -35,4 +35,4 @@ The current state of the project allows building and running a demo scene featur
 - The project uses **custom shaders** and **vertex manipulation** for real-time mesh deformation.
 
 ## Special thanks:
-To @trashpandaboy, nice repos. I used the EventDispatcher and turned out to be really handy.
+To [@trashpandaboy](https://github.com/trashpandaboy), nice repos. I used the EventDispatcher and turned out to be really handy.
