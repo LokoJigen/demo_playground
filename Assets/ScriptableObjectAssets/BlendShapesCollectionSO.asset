@@ -13,9 +13,13 @@ MonoBehaviour:
   m_Name: BlendShapesCollectionSO
   m_EditorClassIdentifier: 
   blendShapes:
-  - blendShapeSO: {fileID: 11400000, guid: 23f037d10b6e68a4da9c55d2aff24046, type: 2}
+  - blendShapeSO: {fileID: 11400000, guid: 4c0a458882006324f9a2440667e533e1, type: 2}
     blendShapeType: 1
-  - blendShapeSO: {fileID: 11400000, guid: 08bef0d64aca74c4d8adc6ce5a543d76, type: 2}
-    blendShapeType: 2
   - blendShapeSO: {fileID: 11400000, guid: a07638d6e6f68fb4db132a1564c91e1e, type: 2}
+    blendShapeType: 2
+  - blendShapeSO: {fileID: 11400000, guid: 23f037d10b6e68a4da9c55d2aff24046, type: 2}
     blendShapeType: 3
+  - blendShapeSO: {fileID: 11400000, guid: 08bef0d64aca74c4d8adc6ce5a543d76, type: 2}
+    blendShapeType: 4
+  - blendShapeSO: {fileID: 11400000, guid: 1122984e10a14594a9bd1b27d47b731f, type: 2}
+    blendShapeType: 5

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6fb30fc49d442644689c9fa8616c469c, type: 3}
   m_Name: BlendShapeSO_Hit
   m_EditorClassIdentifier: 
-  blendShapeDuration: 0.8
+  blendShapeDuration: 1
   blendShapeDatas:
   - 100
   - 0

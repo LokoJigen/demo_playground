@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6fb30fc49d442644689c9fa8616c469c, type: 3}
   m_Name: BlendShapeSO_DistantFace
   m_EditorClassIdentifier: 
+  blendShapeDuration: 1
   blendShapeDatas:
+  - 80
   - 0
-  - 0
-  - 100
+  - 30
